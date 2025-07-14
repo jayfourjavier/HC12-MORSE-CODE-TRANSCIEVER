@@ -5,9 +5,33 @@ This project demonstrates a simple wireless Morse code communication system usin
 
 It's designed for educational purposes, amateur radio practice, or simple wireless signaling.
 
-![Morse Code Transciever](assets/images/Morse-Code-Transceiver.png)
+---
+
+## Assembled Device and Notes
+
+### Final Build with 3D Printed Casing
+
+![Morse Code Transceiver - Front View](assets/images/with-casing-1.png)
+
+> **Note:** This image shows the complete Morse Code Transceiver mounted in its custom 3D printed casing. The button, LED, and buzzer are all accessible from the top. The casing helps protect the components and improves usability in real-world scenarios.
 
 ---
+
+![Morse Code Transceiver - Angled View](assets/images/with-casing-2.png)
+
+> **Note:** Angled view of the device showcasing compact assembly  Make sure to leave openings for ventilation and button/buzzer clearance when designing your own case.
+
+---
+
+### 🔧 Actual PCB Before Assembly
+
+![Morse Code Transceiver - Bare PCB](assets/images/pcb-actual.png)
+
+> **Note:** This is the actual fabricated PCB before placing components. You can visually match this with the schematic and PCB layout for assembly reference. Always double-check silkscreen labels and polarity markings before soldering.
+
+---
+
+
 
 ## 🧠 Algorithm Overview
 
