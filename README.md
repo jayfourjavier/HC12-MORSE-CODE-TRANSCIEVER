@@ -117,7 +117,6 @@ unsigned long buttonDashPressDuration = 1000;         // Duration for button pre
 
 unsigned long lastButtonPressTime = 0;                // Variable to hold the last button press time
 
-
 /*
 @brief Function to beep the buzzer and LED at the same time
 @param _times Number of times to beep
@@ -243,7 +242,6 @@ void outBeepAndBuzz(bool _isDot) {
   delay(morseInterval);
 }
 
-
 void morseBeepAndBuzz(int _value) {
   if (_value == 1){
     outBeepAndBuzz(true); // Dot
@@ -311,7 +309,6 @@ void setupIoPins() {
   Serial.println("-----------------------------------");
 }
 
-
 void setup() {
   Serial.begin(9600);                                 // Start Serial communication for debugging
   setupIoPins();                                      // Setup IO pins for button, LED and buzzer
@@ -328,8 +325,6 @@ void setup() {
   }
 
 }
-
-
 
 void loop() {
   loopBuzzerLedAndButtonTest();                                        // Test buzzer, LED and button functionality if enabled
