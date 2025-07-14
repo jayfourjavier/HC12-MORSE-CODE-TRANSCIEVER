@@ -23,7 +23,7 @@ It's designed for educational purposes, amateur radio practice, or simple wirele
 
 ---
 
-### 🔧 Actual PCB Before Assembly
+### Actual PCB Before Assembly
 
 ![Morse Code Transceiver - Bare PCB](assets/images/pcb-actual.png)
 
@@ -33,7 +33,7 @@ It's designed for educational purposes, amateur radio practice, or simple wirele
 
 
 
-## 🧠 Algorithm Overview
+## Algorithm Overview
 
 1. **Button Input Detection**
 
@@ -88,7 +88,7 @@ It's designed for educational purposes, amateur radio practice, or simple wirele
 ![Schematic Diagram](assets/images/schematic.png)
 
 > This schematic shows the electrical connections between the Arduino, button, LED, buzzer, and HC-12 module.
-> ✅ Make sure to:
+> Make sure to:
 >
 > * Use a **current-limiting resistor** (220Ω–330Ω) for the LED.
 > * Double-check **TX and RX alignment** when connecting the HC-12 module.
@@ -102,7 +102,7 @@ It's designed for educational purposes, amateur radio practice, or simple wirele
 
 > A custom 3D printed case was designed to house the PCB and provide mounting holes for external button and indicator components. The case ensures portability and protects the electronics during use.
 
-👉 STL files available inside the [`assets/stl/`](assets/stl/) folder.
+STL files available inside the [`assets/stl/`](assets/stl/) folder.
 You can [download the STL files directly here](assets/stl/) if viewing this on a web interface.
 
 ---
@@ -386,11 +386,11 @@ void loop() {
 
 ---
 
-## 💖 Support Us
+## Support Us
 
 If you found this project helpful, consider supporting our future open-source educational projects.
 
-### 📱 GCash Number
+### GCash Number
 
 ```
 0963-214-6348
