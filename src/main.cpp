@@ -1,46 +1,49 @@
 #include <Arduino.h>
 #include <SoftwareSerial.h>
 
-const byte BUTTON_PIN = 2;
-const byte LED_PIN = 4;
-const byte BUZZER_PIN = 6;
+// Declare constants for the pin numbers of the button, led, buzzer, and HC12 pins
+const byte BUTTON_PIN = 2;                            // Momentary push-button switch accross pin 2 and GND
+const byte LED_PIN = 4;                               // 5mm Red LED with current limiting resistor accross pin 4 and GND
+const byte BUZZER_PIN = 6;                            // 5V Active Buzzer accross pin 6 and GND
+const byte HC12_SET_PIN = 8;                          // HC-12 SET pin for configuration mode (active low) 
+const byte HC12_TX_PIN = 10;                          // HC-12 TX pin connected to Arduino RX pin
+const byte HC12_RX_PIN = 12;                          // HC-12 RX pin connected to Arduino TX pin 
 
-const byte HC12_SET_PIN = 8;
-const byte HC12_TX_PIN = 10;
-const byte HC12_RX_PIN = 12;
+//Initiate an instance of the Software Serial Object for the HC-12 module
+SoftwareSerial morse(HC12_TX_PIN, HC12_RX_PIN);       // RX, TX (Arduino Uno Software Serial)
 
-SoftwareSerial morse(HC12_TX_PIN, HC12_RX_PIN); //Arduino RX, Arduino TX
-
-bool testMode = false; // Set to true to enable HC-12 configuration mode
-bool isInitiator = false; // Set to true if this device is the initiator of the communication
-const bool  toTestBuzzerLedAndButton = false; // Set to true to test buzzer, LED and button functionality
-const bool hcTestMode = false; // Set to true to enable HC-12 configuration mode
+bool testMode = false;                                // Set to true to enable HC-12 configuration mode
+bool isInitiator = false;                             // Set to true if this device is the initiator of the communication
+const bool  toTestBuzzerLedAndButton = false;         // Set to true to test buzzer, LED and button functionality
+const bool hcTestMode = false;                        // Set to true to enable HC-12 configuration mode
 int hc12TestValue = 0;
 
-int morseToSend = 0; // Variable to hold the value to send via HC-12
-int morseReceived = 0; // Variable to hold the received value from HC-12
+int morseToSend = 0;                                  // Variable to hold the value to send via HC-12
+int morseReceived = 0;                                // Variable to hold the received value from HC-12
 
-unsigned long dashDuration = 600; // Duration for dash in milliseconds
-unsigned long dotDuration = 200; // Duration for dot in milliseconds
-unsigned long morseInterval = 1000; // Interval between dots and dashes in milliseconds
+unsigned long dashDuration = 600;                     // Duration for dash in milliseconds
+unsigned long dotDuration = 200;                      // Duration for dot in milliseconds
+unsigned long morseInterval = 1000;                   // Interval between dots and dashes in milliseconds
 
-unsigned long buttonDotPressDuration = 500; // Duration for button press in milliseconds
-unsigned long buttonDashPressDuration = 1000; // Duration for button press for dash in milliseconds
+unsigned long buttonDotPressDuration = 500;           // Duration for button press in milliseconds
+unsigned long buttonDashPressDuration = 1000;         // Duration for button press for dash in milliseconds
 
-unsigned long lastButtonPressTime = 0; // Variable to hold the last button press time
+unsigned long lastButtonPressTime = 0;                // Variable to hold the last button press time
 
 
 /*
-@brief Function to beep the buzzer
+@brief Function to beep the buzzer and LED at the same time
 @param _times Number of times to beep
 @param _duration Duration of each beep in milliseconds
 */
-void beep (int _times, int _duration) {
+void beepAndBuzz (int _times, int _duration) {
   for (int i = 0; i < _times; i++) {
     digitalWrite(BUZZER_PIN, HIGH);
+    digitalWrite(LED_PIN, HIGH);
     delay(_duration);
     digitalWrite(BUZZER_PIN, LOW);
-    delay(_duration);
+    digitalWrite(LED_PIN, LOW);
+    delay(200); // Delay between beeps
   }
 }
 
@@ -114,57 +117,51 @@ void loopHcTestMode() {
 }
 
 bool setupHc12() {
-  morse.begin(9600); // Start HC-12 serial communication
-  pinMode(HC12_SET_PIN, OUTPUT);
-  digitalWrite(HC12_SET_PIN, LOW); // Enter AT command mode
+  morse.begin(9600);                                      // Start HC-12 serial communication
+  pinMode(HC12_SET_PIN, OUTPUT);                          // Set HC-12 SET pin as output
+  digitalWrite(HC12_SET_PIN, LOW);                        // Set HC-12 SET pin to LOW to enter configuration mode
 
-  delay(1000); // Let the module initialize
+  delay(1000);                                            // Let the module initialize
 
-  morse.println("AT");
-  delay(100);
+  morse.println("AT");                                    // Send "AT" command to HC-12 to check if functional
+  delay(100);                                             // Brief pause to ensure Serial message is sent and response is received
 
   if (morse.available()) {
-    String response = morse.readStringUntil('\n');
+    String response = morse.readStringUntil('\n');        // Read response from HC-12 module and print to serial monitor
     Serial.print("HC-12 Response: ");
     Serial.println(response);
 
-    digitalWrite(HC12_SET_PIN, HIGH); // ✅ Switch to normal mode before returning
+    digitalWrite(HC12_SET_PIN, HIGH);                     // Switch to normal mode
 
-    if (response.startsWith("OK")) {
+    if (response.startsWith("OK")) {                      // Return True if response is "OK"
       Serial.println("HC-12 is ready for configuration.");
       return true;
     } else {
-      Serial.println("Failed to configure HC-12.");
+      Serial.println("Failed to configure HC-12.");       // Return False if "OK" response is not received
       return false;
     }
   } else {
     Serial.println("No response from HC-12.");
-    digitalWrite(HC12_SET_PIN, HIGH); // ✅ Still ensure we switch back
+    digitalWrite(HC12_SET_PIN, HIGH);                     // Switch to normal mode
     return false;
   }
 }
 
-void blink(bool _isDot) {
-  digitalWrite(LED_PIN, HIGH);
-  digitalWrite(BUZZER_PIN, HIGH);
-
-  if (_isDot) {
-    delay(dotDuration);
-  } else {
-    delay(dashDuration);
-  }
-
-  digitalWrite(LED_PIN, LOW);
-  digitalWrite(BUZZER_PIN, LOW);
+/*
+*@brief Function to beep the buzzer and LED for a specific duration based on the morse code received
+*@param _isDot True for dot, false for dash
+*/
+void outBeepAndBuzz(bool _isDot) {
+  beepAndBuzz(1, _isDot ? dotDuration : dashDuration);           // Beep once for dot, twice for dash
   delay(morseInterval);
 }
 
 
-void morseBlink(int _value) {
+void morseBeepAndBuzz(int _value) {
   if (_value == 1){
-    blink(true); // Dot
+    outBeepAndBuzz(true); // Dot
   } else if (_value == 2) {
-    blink(false); // Dash
+    outBeepAndBuzz(false); // Dash
   } else {
     Serial.println("Invalid morse value. Please send 1 for dot or 2 for dash.");
   }
@@ -182,9 +179,11 @@ int talkMorse() {
 
       // 🔊 Beep once when dash threshold is reached
       if (!dashBeeped && holdDuration > 1000) {
+        digitalWrite(LED_PIN, HIGH);
         digitalWrite(BUZZER_PIN, HIGH);
         delay(100); // Short beep
         digitalWrite(BUZZER_PIN, LOW);
+        digitalWrite(LED_PIN, LOW);
         dashBeeped = true;
       }
     }
@@ -203,31 +202,41 @@ int talkMorse() {
   return _morseToSend;
 }
 
+/*
+* @brief Function to setup IO pins for button, LED and buzzer
+*/
+void setupIoPins() {
+  pinMode(BUTTON_PIN, INPUT_PULLUP);                     // Set button pin as input with pull-up resistor
+  pinMode(LED_PIN, OUTPUT);                              // Set LED pin as output
+  pinMode(BUZZER_PIN, OUTPUT);                           // Set buzzer pin as output
 
+  digitalWrite(LED_PIN, LOW);                            // Ensure LED is off at startup
+  digitalWrite(BUZZER_PIN, LOW);                         // Ensure buzzer is off at startup
 
+  Serial.println("-----------------------------------");
+  Serial.println("IO Pins Initialized");
+  Serial.print("Button Pin: ");
+  Serial.println(BUTTON_PIN);
+  Serial.print("LED Pin: ");
+  Serial.println(LED_PIN);
+  Serial.print("Buzzer Pin: ");
+  Serial.println(BUZZER_PIN);
+  Serial.println("-----------------------------------");
+}
 
 
 void setup() {
-  pinMode(BUTTON_PIN, INPUT_PULLUP);
-  pinMode(LED_PIN, OUTPUT);
-  pinMode(BUZZER_PIN, OUTPUT);
-  
-  pinMode(HC12_SET_PIN, OUTPUT);
-  digitalWrite(HC12_SET_PIN, HIGH); // Set HC-12 to normal mode
-  //digitalWrite(HC12_SET_PIN, LOW); // Uncomment to set HC-12 to configuration mode
-
-  Serial.begin(9600); // Start Serial communication for debugging
-
-
+  Serial.begin(9600);                                 // Start Serial communication for debugging
+  setupIoPins();                                      // Setup IO pins for button, LED and buzzer
   setupHcTestMode();
 
-  if(setupHc12()) {
+
+  // Initialize HC-12 module
+  if(setupHc12()) {                                   // If HC-12 setup is successful beep and buzz for 200 milliseconds for 5 times
     Serial.println("HC-12 setup successful.");
-    //Beep 5x fast
-    beep(5, 150);
-  } else {
-    //Beep 5x slow
-    beep(5, 500);
+    beepAndBuzz(5, 200);
+  } else {                                            // If HC-12 setup fails beep and buzz for 3 seconds three time 
+    beepAndBuzz(3, 3000);                               
     Serial.println("HC-12 setup failed.");
   }
 
@@ -236,27 +245,33 @@ void setup() {
 
 
 void loop() {
-  loopBuzzerLedAndButtonTest();
-  loopHcTestMode();
+  loopBuzzerLedAndButtonTest();                                        // Test buzzer, LED and button functionality if enabled
+  loopHcTestMode();                                                    // Loop for HC-12 test mode if enabled      
 
+  // Priority is listen mode, button cannot be pressed while receiving morse code from other devices
+  // System is designed to receive morse code from other devices and send morse code when button is pressed
+  // Where 1 is dot and 2 is dash
+  // If morse code is received, it will be beeped and buzzed
   if (morse.available()) {
-    String message = morse.readStringUntil('\n');
+    String message = morse.readStringUntil('\n');                       // Get message from HC-12 module and print to serial monitor
     Serial.print("Received: ");
     Serial.println(message);
 
-    morseReceived = message.toInt();
+    morseReceived = message.toInt();                                    // Convert the received message to an integer, if it is not a valid integer, it will be 0
 
-    if(morseReceived > 0) {
-      morseBlink(morseReceived);
+    if(morseReceived > 0) {                                             // If the received message is greater than 0, it is a valid morse code
+      Serial.print("Morse Received: ");
+      Serial.println(morseReceived);
+      morseBeepAndBuzz(morseReceived);                                  // Perform corresponding beep and buzz for the received morse code
     }
   } else {
-    //Listen for button press
-    morseToSend = talkMorse ();
+    //Listen for button press if no morse code is available to output
+    morseToSend = talkMorse ();                                         // Call the function to check if the button is pressed and get the morse code to send
 
-    if (morseToSend > 0) {
+    if (morseToSend > 0) {                                              // If the button press is valid, it will be either 1 or 2  
       Serial.print("Sending: ");
       Serial.println(morseToSend);
-      morse.println(morseToSend); // Send the morse value via HC-12
+      morse.println(morseToSend);                                       // Send the morse value via HC-12
     }
   }
 }
